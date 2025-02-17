@@ -1,6 +1,44 @@
+'use client'
+import { ArrowUp } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function Home() {
+ 
+  const [inputText, setInputText]= useState('')
+  const [outputText, setOutputText] = useState('')
+  const [detectedText, setDetectedText] = useState('')
+  const [processedText, setProcessedText] = useState('')
+
+
+  // function to handle send button
+
+  // const handleSend = () => {
+  //   if (!inputText.trim()) {
+  //     alert('Please enter some text');
+  //     return;
+  //   }
+
+    // Display OutputText
+    // setOutputText(inputText);
+
+    // setDetectedLanguage('');
+    // setProcessedText('');
+
+  //  const language = await detectlanguage(inputText);
+  //  setDetectedLanguage(language)
+  // }
+
+  // const detectlanguage = async (text) => {
+  //    try {
+  //     const response = await
+  //    } catch (error) {
+      
+  //    }
+  }
+
+
+
   return (
     <div className="min-h-screen ml-28 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
       {/* Heading */}
@@ -14,10 +52,11 @@ export default function Home() {
 
       {/* Container for the Interface */}
       <div className="max-w-2xl mx-auto ">
-        {/* Output Area */}
+        <p>{outputText}</p>
         <div className="mb-4 p-4">
-          <p>This is where the output text will appear.</p>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Detected Language: <strong>English</strong></p>
+        {detectedLanguage && (
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Detected Language: <strong>{detectedLanguage}</strong></p>
+          )}
         </div>
 
         {/* Input Area */}
@@ -25,12 +64,16 @@ export default function Home() {
         <textarea
             className="w-full p-4 border bg-gray-800 border-gray-500 rounded-2xl focus:outline-none text-white pr-16"
             placeholder="Enter your text here..."
-            rows={4}
+            rows={5}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
           />
           <button
-            className="absolute bottom-3 right-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="absolute bottom-3 right-3 px-1 
+            py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={handleSend}
           >
-            Send
+           <ArrowUp />
           </button>
         </div>
 
@@ -61,7 +104,7 @@ export default function Home() {
 
         {/* Processed Output */}
         <div className="mt-4 p-4 justify-center text-center">
-          <p>This is where the processed text (summary or translation) will appear.</p>
+          {/* <p>This is where the processed text (summary or translation) will appear.</p> */}
         </div>
       </div>
     </div>

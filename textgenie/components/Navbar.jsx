@@ -4,7 +4,7 @@ import React from 'react';
 
 const Navbar = () => {
   return (
-    <div className='h-[100%] w-[150px] fixed top-0 left-0 p-[20px] bg-gray-800'>
+    <div className='h-full w-[150px] fixed top-0 left-0 p-[20px] bg-gray-800'>
       <div className='px-[25px] font-[15px]'>
         <Link href="/">
           <Image src="/logo.png" width={70} height={70} alt='logo' className='my-2' />
