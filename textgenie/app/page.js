@@ -37,7 +37,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen ml-0 md:ml-28 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
       {/* Heading */}
       <div className="my-8">
         <div className="flex justify-center items-center">
