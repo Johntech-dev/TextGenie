@@ -50,9 +50,35 @@ export default function Home() {
 
   // Debugging: Log outputText changes
   useEffect(() => {
-    console.log('Output Text Updated:', outputText);
-    console.log('Output Text Length:', outputText.length);
+    console.log("Output Text Updated:", outputText);
+    console.log("Output Text Length:", outputText.length);
   }, [outputText]);
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!inputText.trim()) {
+      setError('Please enter some text.');
+      return;
+    }
+
+    console.log("Input Text:", inputText); // Debugging
+    console.log("Input Text Length:", inputText.length); // Debugging
+
+    setOutputText(inputText);
+    setOriginalText(inputText);
+    setInputText('');
+    setError('');
+    setSummary('');
+    setTranslatedText('');
+    setTranslatedSummary('');
+
+    console.log("Output Text:", outputText); // Debugging
+    console.log("Output Text Length:", outputText.length); // Debugging
+
+    await detectLanguage(inputText);
+  };
 
   // Detect language using the Language Detector API
   const detectLanguage = async (text) => {
@@ -154,26 +180,6 @@ export default function Home() {
       setError('Translation failed. Please try again.');
       console.error(err);
     }
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!inputText.trim()) {
-      setError('Please enter some text.');
-      return;
-    }
-
-    setOutputText(inputText);
-    setOriginalText(inputText);
-    setInputText('');
-    setError('');
-    setSummary('');
-    setTranslatedText('');
-    setTranslatedSummary('');
-
-    await detectLanguage(inputText);
   };
 
   return (
