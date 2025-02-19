@@ -1,14 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
 import Image from 'next/image';
 
 // Custom summarization logic
 const summarizeTextCustom = (text) => {
-  // Split the text into sentences
   const sentences = text.split(/[.!?]/).filter((s) => s.trim().length > 0);
-
-  // Return the first 2 sentences as the summary
   return sentences.slice(0, 2).join('. ') + '.';
 };
 
@@ -22,9 +19,8 @@ const mockChromeAI = {
   translation: {
     createTranslator: async ({ targetLanguage }) => ({
       translate: async (text) => {
-        // Mock translation logic
         if (targetLanguage === 'en') {
-          return text; // Return the same text for English
+          return text;
         }
         return `Translated to ${targetLanguage}: ${text}`;
       },
@@ -50,7 +46,13 @@ export default function Home() {
   const [translatedSummary, setTranslatedSummary] = useState('');
   const [error, setError] = useState('');
   const [isModelDownloading, setIsModelDownloading] = useState(false);
-  const [originalText, setOriginalText] = useState(''); // Store the original text for translation back to English
+  const [originalText, setOriginalText] = useState('');
+
+  // Debugging: Log outputText changes
+  useEffect(() => {
+    console.log('Output Text Updated:', outputText);
+    console.log('Output Text Length:', outputText.length);
+  }, [outputText]);
 
   // Detect language using the Language Detector API
   const detectLanguage = async (text) => {
@@ -60,13 +62,11 @@ export default function Home() {
     }
 
     try {
-      // Check if the Language Detector API is supported
       if (!('ai' in self) || !('languageDetector' in self.ai)) {
         setError('Language Detection API is not supported in your browser.');
         return;
       }
 
-      // Check if the model is ready
       const capabilities = await self.ai.languageDetector.capabilities();
       if (capabilities.capabilities === 'no') {
         setError('Language Detection API is not usable at the moment.');
@@ -75,10 +75,8 @@ export default function Home() {
 
       let detector;
       if (capabilities.capabilities === 'readily') {
-        // Model is already downloaded and ready
         detector = await self.ai.languageDetector.create();
       } else if (capabilities.capabilities === 'after-download') {
-        // Model needs to be downloaded
         setIsModelDownloading(true);
         detector = await self.ai.languageDetector.create({
           monitor(m) {
@@ -87,11 +85,10 @@ export default function Home() {
             });
           },
         });
-        await detector.ready; // Wait for the model to be ready
+        await detector.ready;
         setIsModelDownloading(false);
       }
 
-      // Detect the language
       const results = await detector.detect(text);
       if (results.length > 0) {
         const { detectedLanguage, confidence } = results[0];
@@ -142,15 +139,13 @@ export default function Home() {
       }
 
       const translator = await self.translation.createTranslator({
-        sourceLanguage: detectedLanguage || 'en', // Use detected language or default to English
+        sourceLanguage: detectedLanguage || 'en',
         targetLanguage: selectedLanguage,
       });
 
-      // Translate the main text
       const translation = await translator.translate(outputText);
       setTranslatedText(translation);
 
-      // Translate the summary (if it exists)
       if (summary) {
         const translatedSummary = await translator.translate(summary);
         setTranslatedSummary(translatedSummary);
@@ -171,14 +166,13 @@ export default function Home() {
     }
 
     setOutputText(inputText);
-    setOriginalText(inputText); // Store the original text for translation back to English
+    setOriginalText(inputText);
     setInputText('');
     setError('');
     setSummary('');
     setTranslatedText('');
     setTranslatedSummary('');
 
-    // Detect language
     await detectLanguage(inputText);
   };
 
