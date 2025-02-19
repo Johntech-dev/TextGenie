@@ -3,6 +3,29 @@ import { useState } from 'react';
 import { ArrowUp } from 'lucide-react';
 import Image from 'next/image';
 
+// Custom summarization logic
+const summarizeTextCustom = (text) => {
+  // Split the text into sentences
+  const sentences = text.split(/[.!?]/).filter((s) => s.trim().length > 0);
+
+  // Return the first 2 sentences as the summary
+  return sentences.slice(0, 2).join('. ') + '.';
+};
+
+// Mock Chrome AI API
+const mockChromeAI = {
+  summarization: {
+    createSummarizer: async () => ({
+      summarize: async (text) => summarizeTextCustom(text),
+    }),
+  },
+};
+
+// Use the mock API if the real Chrome API is not available
+if (!('summarization' in self)) {
+  self.summarization = mockChromeAI.summarization;
+}
+
 export default function Home() {
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
@@ -11,8 +34,9 @@ export default function Home() {
   const [summary, setSummary] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [error, setError] = useState('');
+  const [isModelDownloading, setIsModelDownloading] = useState(false);
 
-  // Detect language using Chrome AI API
+  // Detect language using the Language Detector API
   const detectLanguage = async (text) => {
     if (!text.trim()) {
       setDetectedLanguage('not sure what language this is');
@@ -20,22 +44,53 @@ export default function Home() {
     }
 
     try {
-      if (!('translation' in self) || !('createDetector' in self.translation)) {
-        setError('Language detection is not supported in your browser.');
+      // Check if the Language Detector API is supported
+      if (!('ai' in self) || !('languageDetector' in self.ai)) {
+        setError('Language Detection API is not supported in your browser.');
         return;
       }
 
-      const detector = await self.translation.createDetector();
-      const [{ detectedLanguage, confidence }] = await detector.detect(text);
-      const languageName = new Intl.DisplayNames(['en'], { type: 'language' }).of(detectedLanguage);
-      setDetectedLanguage(`${(confidence * 100).toFixed(1)}% sure that this is ${languageName}`);
+      // Check if the model is ready
+      const capabilities = await self.ai.languageDetector.capabilities();
+      if (capabilities.capabilities === 'no') {
+        setError('Language Detection API is not usable at the moment.');
+        return;
+      }
+
+      let detector;
+      if (capabilities.capabilities === 'readily') {
+        // Model is already downloaded and ready
+        detector = await self.ai.languageDetector.create();
+      } else if (capabilities.capabilities === 'after-download') {
+        // Model needs to be downloaded
+        setIsModelDownloading(true);
+        detector = await self.ai.languageDetector.create({
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+            });
+          },
+        });
+        await detector.ready; // Wait for the model to be ready
+        setIsModelDownloading(false);
+      }
+
+      // Detect the language
+      const results = await detector.detect(text);
+      if (results.length > 0) {
+        const { detectedLanguage, confidence } = results[0];
+        const languageName = new Intl.DisplayNames(['en'], { type: 'language' }).of(detectedLanguage);
+        setDetectedLanguage(`${(confidence * 100).toFixed(1)}% sure that this is ${languageName}`);
+      } else {
+        setDetectedLanguage('Language detection failed.');
+      }
     } catch (err) {
       setError('Language detection failed. Please try again.');
       console.error(err);
     }
   };
 
-  // Summarize text using Chrome AI API
+  // Summarize text using the custom implementation
   const summarizeText = async () => {
     if (!outputText.trim() || outputText.length <= 150) {
       setError('Text must be longer than 150 characters to summarize.');
@@ -44,7 +99,7 @@ export default function Home() {
 
     try {
       if (!('summarization' in self) || !('createSummarizer' in self.summarization)) {
-        setError('Summarization is not supported in your browser.');
+        setError('Summarization API is not supported in your browser.');
         return;
       }
 
@@ -57,7 +112,7 @@ export default function Home() {
     }
   };
 
-  // Translate text using Chrome AI API
+  // Translate text using the Translator API
   const translateText = async () => {
     if (!outputText.trim()) {
       setError('Please enter text to translate.');
@@ -66,12 +121,12 @@ export default function Home() {
 
     try {
       if (!('translation' in self) || !('createTranslator' in self.translation)) {
-        setError('Translation is not supported in your browser.');
+        setError('Translation API is not supported in your browser.');
         return;
       }
 
       const translator = await self.translation.createTranslator({
-        sourceLanguage: 'en',
+        sourceLanguage: 'en', // Default source language
         targetLanguage: selectedLanguage,
       });
       const translation = await translator.translate(outputText);
@@ -129,11 +184,12 @@ export default function Home() {
             </div>
           )}
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+          {isModelDownloading && <p className="text-sm text-blue-500 mt-2">Downloading language detection model...</p>}
         </div>
 
         {/* Action Buttons */}
         <div className="mt-4 flex flex-col md:flex-row justify-center gap-2">
-          {outputText.length > 150 && detectedLanguage.includes('English') && (
+          {outputText.length > 150 && (
             <button
               onClick={summarizeText}
               className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
