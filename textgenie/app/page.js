@@ -29,11 +29,13 @@ const mockChromeAI = {
 };
 
 // Use the mock API if the real Chrome API is not available
-if (!('summarization' in self)) {
-  self.summarization = mockChromeAI.summarization;
-}
-if (!('translation' in self)) {
-  self.translation = mockChromeAI.translation;
+if (typeof window !== 'undefined') {
+  if (!('summarization' in self)) {
+    self.summarization = mockChromeAI.summarization;
+  }
+  if (!('translation' in self)) {
+    self.translation = mockChromeAI.translation;
+  }
 }
 
 export default function Home() {
@@ -82,6 +84,11 @@ export default function Home() {
 
   // Detect language using the Language Detector API
   const detectLanguage = async (text) => {
+    if (typeof window === 'undefined') {
+      setError('Language Detection API is not supported in this environment.');
+      return;
+    }
+
     if (!text.trim()) {
       setDetectedLanguage('not sure what language this is');
       return;
@@ -131,6 +138,11 @@ export default function Home() {
 
   // Summarize text using the custom implementation
   const summarizeText = async () => {
+    if (typeof window === 'undefined') {
+      setError('Summarization API is not supported in this environment.');
+      return;
+    }
+
     if (!outputText.trim() || outputText.length <= 150) {
       setError('Text must be longer than 150 characters to summarize.');
       return;
@@ -153,6 +165,11 @@ export default function Home() {
 
   // Translate text using the Translator API
   const translateText = async () => {
+    if (typeof window === 'undefined') {
+      setError('Translation API is not supported in this environment.');
+      return;
+    }
+
     if (!outputText.trim()) {
       setError('Please enter text to translate.');
       return;
