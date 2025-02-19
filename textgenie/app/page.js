@@ -19,11 +19,25 @@ const mockChromeAI = {
       summarize: async (text) => summarizeTextCustom(text),
     }),
   },
+  translation: {
+    createTranslator: async ({ targetLanguage }) => ({
+      translate: async (text) => {
+        // Mock translation logic
+        if (targetLanguage === 'en') {
+          return text; // Return the same text for English
+        }
+        return `Translated to ${targetLanguage}: ${text}`;
+      },
+    }),
+  },
 };
 
 // Use the mock API if the real Chrome API is not available
 if (!('summarization' in self)) {
   self.summarization = mockChromeAI.summarization;
+}
+if (!('translation' in self)) {
+  self.translation = mockChromeAI.translation;
 }
 
 export default function Home() {
@@ -33,8 +47,10 @@ export default function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [summary, setSummary] = useState('');
   const [translatedText, setTranslatedText] = useState('');
+  const [translatedSummary, setTranslatedSummary] = useState('');
   const [error, setError] = useState('');
   const [isModelDownloading, setIsModelDownloading] = useState(false);
+  const [originalText, setOriginalText] = useState(''); // Store the original text for translation back to English
 
   // Detect language using the Language Detector API
   const detectLanguage = async (text) => {
@@ -126,11 +142,19 @@ export default function Home() {
       }
 
       const translator = await self.translation.createTranslator({
-        sourceLanguage: 'en', // Default source language
+        sourceLanguage: detectedLanguage || 'en', // Use detected language or default to English
         targetLanguage: selectedLanguage,
       });
+
+      // Translate the main text
       const translation = await translator.translate(outputText);
       setTranslatedText(translation);
+
+      // Translate the summary (if it exists)
+      if (summary) {
+        const translatedSummary = await translator.translate(summary);
+        setTranslatedSummary(translatedSummary);
+      }
     } catch (err) {
       setError('Translation failed. Please try again.');
       console.error(err);
@@ -147,10 +171,12 @@ export default function Home() {
     }
 
     setOutputText(inputText);
+    setOriginalText(inputText); // Store the original text for translation back to English
     setInputText('');
     setError('');
     setSummary('');
     setTranslatedText('');
+    setTranslatedSummary('');
 
     // Detect language
     await detectLanguage(inputText);
@@ -181,6 +207,12 @@ export default function Home() {
             <div className="mt-4">
               <p className="font-semibold">Translated Text:</p>
               <p className="text-gray-700 dark:text-gray-300">{translatedText}</p>
+            </div>
+          )}
+          {translatedSummary && (
+            <div className="mt-4">
+              <p className="font-semibold">Translated Summary:</p>
+              <p className="text-gray-700 dark:text-gray-300">{translatedSummary}</p>
             </div>
           )}
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
