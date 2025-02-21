@@ -41,7 +41,7 @@ const Navbar = () => {
           </Link>
 
           {/* Links */}
-          <div className="mt-8 flex flex-col gap-2">
+          {/* <div className="mt-8 flex flex-col gap-2">
             <Link
               href="/about"
               className="text-white hover:bg-gray-700 p-2 rounded"
@@ -60,7 +60,7 @@ const Navbar = () => {
             >
               Contact
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
 
