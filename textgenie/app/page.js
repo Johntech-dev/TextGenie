@@ -40,21 +40,16 @@ if (typeof window !== 'undefined') {
 
 export default function Home() {
   const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
+  const [messages, setMessages] = useState([]);
   const [detectedLanguage, setDetectedLanguage] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [summary, setSummary] = useState('');
-  const [translatedText, setTranslatedText] = useState('');
-  const [translatedSummary, setTranslatedSummary] = useState('');
   const [error, setError] = useState('');
   const [isModelDownloading, setIsModelDownloading] = useState(false);
-  const [originalText, setOriginalText] = useState('');
 
-  // Debugging: Log outputText changes
+  // Debugging: Log messages changes
   useEffect(() => {
-    console.log("Output Text Updated:", outputText);
-    console.log("Output Text Length:", outputText.length);
-  }, [outputText]);
+    console.log("Messages Updated:", messages);
+  }, [messages]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -65,19 +60,10 @@ export default function Home() {
       return;
     }
 
-    console.log("Input Text:", inputText); // Debugging
-    console.log("Input Text Length:", inputText.length); // Debugging
-
-    setOutputText(inputText);
-    setOriginalText(inputText);
+    const userMessage = { text: inputText, sender: 'user' };
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInputText('');
     setError('');
-    setSummary('');
-    setTranslatedText('');
-    setTranslatedSummary('');
-
-    console.log("Output Text:", outputText); // Debugging
-    console.log("Output Text Length:", outputText.length); // Debugging
 
     await detectLanguage(inputText);
   };
@@ -143,7 +129,8 @@ export default function Home() {
       return;
     }
 
-    if (!outputText.trim() || outputText.length <= 150) {
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || !lastMessage.text.trim() || lastMessage.text.length <= 150) {
       setError('Text must be longer than 150 characters to summarize.');
       return;
     }
@@ -155,8 +142,9 @@ export default function Home() {
       }
 
       const summarizer = await self.summarization.createSummarizer();
-      const summary = await summarizer.summarize(outputText);
-      setSummary(summary);
+      const summary = await summarizer.summarize(lastMessage.text);
+      const summaryMessage = { text: summary, sender: 'bot' };
+      setMessages((prevMessages) => [...prevMessages, summaryMessage]);
     } catch (err) {
       setError('Summarization failed. Please try again.');
       console.error(err);
@@ -170,7 +158,8 @@ export default function Home() {
       return;
     }
 
-    if (!outputText.trim()) {
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || !lastMessage.text.trim()) {
       setError('Please enter text to translate.');
       return;
     }
@@ -186,13 +175,9 @@ export default function Home() {
         targetLanguage: selectedLanguage,
       });
 
-      const translation = await translator.translate(outputText);
-      setTranslatedText(translation);
-
-      if (summary) {
-        const translatedSummary = await translator.translate(summary);
-        setTranslatedSummary(translatedSummary);
-      }
+      const translation = await translator.translate(lastMessage.text);
+      const translationMessage = { text: translation, sender: 'bot' };
+      setMessages((prevMessages) => [...prevMessages, translationMessage]);
     } catch (err) {
       setError('Translation failed. Please try again.');
       console.error(err);
@@ -210,35 +195,22 @@ export default function Home() {
       </div>
 
       <div className="max-w-2xl mx-auto">
-        {/* Output Area */}
+        {/* Chat Area */}
         <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <p>{outputText}</p>
+          {messages.map((message, index) => (
+            <div key={index} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+              <div className={`inline-block p-3 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'}`}>
+                <p>{message.text}</p>
+              </div>
+            </div>
+          ))}
           {detectedLanguage && <p className="text-sm text-gray-500 mt-2">{detectedLanguage}</p>}
-          {summary && (
-            <div className="mt-4">
-              <p className="font-semibold">Summary:</p>
-              <p className="text-gray-700 dark:text-gray-300">{summary}</p>
-            </div>
-          )}
-          {translatedText && (
-            <div className="mt-4">
-              <p className="font-semibold">Translated Text:</p>
-              <p className="text-gray-700 dark:text-gray-300">{translatedText}</p>
-            </div>
-          )}
-          {translatedSummary && (
-            <div className="mt-4">
-              <p className="font-semibold">Translated Summary:</p>
-              <p className="text-gray-700 dark:text-gray-300">{translatedSummary}</p>
-            </div>
-          )}
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
           {isModelDownloading && <p className="text-sm text-blue-500 mt-2">Downloading language detection model...</p>}
         </div>
 
         {/* Action Buttons */}
         <div className="mt-4 flex flex-col md:flex-row justify-center gap-2">
-          {/* Always show the Summarize button */}
           <button
             onClick={summarizeText}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
