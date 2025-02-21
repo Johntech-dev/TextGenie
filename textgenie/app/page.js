@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
 import Image from 'next/image';
 
-// Custom summarization logic
+
 const summarizeTextCustom = (text) => {
   const sentences = text.split(/[.!?]/).filter((s) => s.trim().length > 0);
   return sentences.slice(0, 2).join('. ') + '.';
 };
 
-// Mock Chrome AI API
 const mockChromeAI = {
   summarization: {
     createSummarizer: async () => ({
@@ -28,7 +27,6 @@ const mockChromeAI = {
   },
 };
 
-// Use the mock API if the real Chrome API is not available
 if (typeof window !== 'undefined') {
   if (!('summarization' in self)) {
     self.summarization = mockChromeAI.summarization;
@@ -46,12 +44,11 @@ export default function Home() {
   const [error, setError] = useState('');
   const [isModelDownloading, setIsModelDownloading] = useState(false);
 
-  // Debugging: Log messages changes
+
   useEffect(() => {
     console.log("Messages Updated:", messages);
   }, [messages]);
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,7 +65,7 @@ export default function Home() {
     await detectLanguage(inputText);
   };
 
-  // Detect language using the Language Detector API
+
   const detectLanguage = async (text) => {
     if (typeof window === 'undefined') {
       setError('Language Detection API is not supported in this environment.');
@@ -122,7 +119,6 @@ export default function Home() {
     }
   };
 
-  // Summarize text using the custom implementation
   const summarizeText = async () => {
     if (typeof window === 'undefined') {
       setError('Summarization API is not supported in this environment.');
@@ -150,8 +146,6 @@ export default function Home() {
       console.error(err);
     }
   };
-
-  // Translate text using the Translator API
   const translateText = async () => {
     if (typeof window === 'undefined') {
       setError('Translation API is not supported in this environment.');
@@ -195,8 +189,7 @@ export default function Home() {
       </div>
 
       <div className="max-w-2xl mx-auto">
-        {/* Chat Area */}
-        <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="">
           {messages.map((message, index) => (
             <div key={index} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
               <div className={`inline-block p-3 rounded-lg ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'}`}>
@@ -208,8 +201,22 @@ export default function Home() {
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
           {isModelDownloading && <p className="text-sm text-blue-500 mt-2">Downloading language detection model...</p>}
         </div>
+        <form onSubmit={handleSubmit} className="relative mt-4">
+          <textarea
+            className="w-full p-4 border bg-gray-800 border-gray-500 rounded-2xl focus:outline-none text-white pr-16"
+            placeholder="Enter your text here..."
+            rows={5}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="absolute bottom-3 right-3 px-2 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <ArrowUp size={18} />
+          </button>
+        </form>
 
-        {/* Action Buttons */}
         <div className="mt-4 flex flex-col md:flex-row justify-center gap-2">
           <button
             onClick={summarizeText}
@@ -236,23 +243,6 @@ export default function Home() {
             Translate
           </button>
         </div>
-
-        {/* Input Area */}
-        <form onSubmit={handleSubmit} className="relative mt-4">
-          <textarea
-            className="w-full p-4 border bg-gray-800 border-gray-500 rounded-2xl focus:outline-none text-white pr-16"
-            placeholder="Enter your text here..."
-            rows={5}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="absolute bottom-3 right-3 px-2 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <ArrowUp size={18} />
-          </button>
-        </form>
       </div>
     </div>
   );
