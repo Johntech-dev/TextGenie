@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react'; // Icons for hamburger and close
+import { Menu, X } from 'lucide-react'; 
 
 const Navbar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,7 +13,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Hamburger Menu (Mobile Only) */}
       <button
         className="fixed top-4 left-4 z-50 p-2 bg-gray-800 text-white rounded-lg md:hidden"
         onClick={toggleSidebar}
@@ -21,14 +20,12 @@ const Navbar = () => {
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 h-full w-64 bg-gray-800 transition-transform duration-300 ease-in-out transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 z-40`}
       >
         <div className="p-4">
-          {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
@@ -64,7 +61,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Overlay (Mobile Only) */}
+      
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
